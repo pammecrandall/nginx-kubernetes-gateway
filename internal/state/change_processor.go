@@ -67,7 +67,7 @@ func (c *ChangeProcessorImpl) CaptureUpsertChange(obj client.Object) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	c.changed = true
+	changed := true
 
 	switch o := obj.(type) {
 	case *v1alpha2.GatewayClass:
@@ -76,26 +76,28 @@ func (c *ChangeProcessorImpl) CaptureUpsertChange(obj client.Object) {
 		}
 		// if the resource spec hasn't changed (its generation is the same), ignore the upsert
 		if c.store.gc != nil && c.store.gc.Generation == o.Generation {
-			c.changed = false
+			changed = false
 		}
 		c.store.gc = o
 	case *v1alpha2.Gateway:
 		// if the resource spec hasn't changed (its generation is the same), ignore the upsert
 		prev, exist := c.store.gateways[getNamespacedName(obj)]
 		if exist && o.Generation == prev.Generation {
-			c.changed = false
+			changed = false
 		}
 		c.store.gateways[getNamespacedName(obj)] = o
 	case *v1alpha2.HTTPRoute:
 		// if the resource spec hasn't changed (its generation is the same), ignore the upsert
 		prev, exist := c.store.httpRoutes[getNamespacedName(obj)]
 		if exist && o.Generation == prev.Generation {
-			c.changed = false
+			changed = false
 		}
 		c.store.httpRoutes[getNamespacedName(obj)] = o
 	default:
 		panic(fmt.Errorf("ChangeProcessor doesn't support %T", obj))
 	}
+
+	c.changed = c.changed || changed
 }
 
 func (c *ChangeProcessorImpl) CaptureDeleteChange(resourceType client.Object, nsname types.NamespacedName) {
