@@ -158,7 +158,6 @@ NGINX Kubernetes Gateway uses semantic versioning for its releases. For more inf
 
 Warning: Major version zero (0.y.z) is reserved for development, anything MAY change at any time. The public API is not stable.
 
-
 ### Steps to create a release.
 
 1. Create a release branch from main, use the naming format: release-MAJOR.MINOR.
