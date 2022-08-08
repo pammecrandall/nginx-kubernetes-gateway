@@ -125,9 +125,13 @@ func MustValidateArguments(flagset *flag.FlagSet, validators ...ValidatorContext
 }
 
 func getBuildInfo() (commitHash string, commitTime string, dirtyBuild bool) {
+	commitHash = "unknown"
+	commitTime = "unknown"
+	dirtyBuild = true
+
 	info, ok := debug.ReadBuildInfo()
 	if !ok {
-		return "unknown", "unknown", true
+		return
 	}
 	for _, kv := range info.Settings {
 		switch kv.Key {
