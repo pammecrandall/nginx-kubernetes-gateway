@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"runtime/debug"
 	"strings"
 
 	flag "github.com/spf13/pflag"
@@ -14,11 +15,13 @@ const (
 	errTmpl = "failed validation - flag: '--%s' reason: '%s'\n"
 )
 
-type Validator func(*flag.FlagSet) error
-type ValidatorContext struct {
-	Key string
-	V   Validator
-}
+type (
+	Validator        func(*flag.FlagSet) error
+	ValidatorContext struct {
+		Key string
+		V   Validator
+	}
+)
 
 func GatewayControllerParam(domain string, namespace string) ValidatorContext {
 	name := "gateway-ctlr-name"
@@ -119,4 +122,23 @@ func MustValidateArguments(flagset *flag.FlagSet, validators ...ValidatorContext
 
 		os.Exit(1)
 	}
+}
+
+func getBuildInfo() (commitHash string, commitTime string, dirtyBuild bool) {
+	info, ok := debug.ReadBuildInfo()
+	if !ok {
+		return "unknown", "unknown", true
+	}
+	for _, kv := range info.Settings {
+		switch kv.Key {
+		case "vcs.revision":
+			commitHash = kv.Value
+		case "vcs.time":
+			commitTime = kv.Value
+		case "vcs.modified":
+			dirtyBuild = kv.Value == "true"
+		}
+	}
+
+	return
 }

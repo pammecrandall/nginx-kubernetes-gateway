@@ -18,8 +18,6 @@ const (
 var (
 	// Set during go build
 	version string
-	commit  string
-	date    string
 
 	// Command-line flags
 	gatewayCtlrName = flag.String(
@@ -50,9 +48,11 @@ func main() {
 		GatewayClassParam(),
 	)
 
+	commit, date, dirty := getBuildInfo()
 	logger.Info("Starting NGINX Kubernetes Gateway",
 		"version", version,
 		"commit", commit,
+		"dirty", dirty,
 		"date", date)
 
 	err := manager.Start(conf)
