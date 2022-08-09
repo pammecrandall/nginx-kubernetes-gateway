@@ -61,7 +61,7 @@ func NewEventHandlerImpl(cfg EventHandlerConfig) *EventHandlerImpl {
 }
 
 func (h *EventHandlerImpl) HandleEventBatch(ctx context.Context, batch EventBatch) {
-	h.cfg.Logger.Info("handling events from the batch", "total", len(batch))
+	h.cfg.Logger.Info("Handling events from the batch", "total", len(batch))
 
 	for _, event := range batch {
 		switch e := event.(type) {
@@ -76,7 +76,7 @@ func (h *EventHandlerImpl) HandleEventBatch(ctx context.Context, batch EventBatc
 
 	changed, conf, statuses := h.cfg.Processor.Process()
 	if !changed {
-		h.cfg.Logger.Info("finished handling the batch with no resulting changes")
+		h.cfg.Logger.Info("Finished handling the batch with no resulting changes")
 		return
 	}
 
@@ -87,7 +87,7 @@ func (h *EventHandlerImpl) HandleEventBatch(ctx context.Context, batch EventBatc
 
 	h.cfg.StatusUpdater.Update(ctx, statuses)
 
-	h.cfg.Logger.Info("finished handling the batch")
+	h.cfg.Logger.Info("Finished handling the batch")
 }
 
 func (h *EventHandlerImpl) updateNginx(ctx context.Context, conf state.Configuration) error {
@@ -112,7 +112,7 @@ func (h *EventHandlerImpl) updateNginx(ctx context.Context, conf state.Configura
 	for obj, objWarnings := range warnings {
 		for _, w := range objWarnings {
 			// FIXME(pleshakov): report warnings via Object status
-			h.cfg.Logger.Info("got warning while generating config",
+			h.cfg.Logger.Info("Got warning while generating config",
 				"kind", obj.GetObjectKind().GroupVersionKind().Kind,
 				"namespace", obj.GetNamespace(),
 				"name", obj.GetName(),
