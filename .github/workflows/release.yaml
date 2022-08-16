@@ -70,21 +70,21 @@ jobs:
             }
             console.log(`The latest release was ${tagFrom}`)
 
-              let level
-              temp_notes.includes("### 🚀 Features") ? level = 'minor' : level = 'patch'
-              temp_notes.includes("### 💣 Breaking Changes") ? level = 'major' : level = level
-              version = semver.inc(tagFrom, level)
-              console.log(`The level of the release is ${level}`)
-
             let version = tagTo.replace('v', '')
             if (version === 'next'){
               const temp_notes = (await github.rest.repos.generateReleaseNotes({
                 owner: context.payload.repository.owner.login,
                 repo: context.payload.repository.name,
                 tag_name: tagTo,
-                previous_tag_name: semver.inc(semver.gt(tagFrom, '0.0.0') ? tagFrom : '', level)
+                previous_tag_name: semver.inc(semver.gt(tagFrom, '0.0.0') ? tagFrom : '', minor)
                 target_commitish: branch,
               })).data.body
+
+              let level
+              temp_notes.includes("### 🚀 Features") ? level = 'minor' : level = 'patch'
+              temp_notes.includes("### 💣 Breaking Changes") ? level = 'major' : level = level
+              version = semver.inc(tagFrom, level)
+              console.log(`The level of the release is ${level}`)
             }
             const draft = releases.find((r) => r.draft && r.tag_name === "v"+version)
             const draft_found = !(draft === undefined)
