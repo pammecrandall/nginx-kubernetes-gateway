@@ -69,6 +69,7 @@ jobs:
               console.log(`Push run with: { tagFrom: ${tagFrom}, tagTo: ${tagTo}, branch: ${branch} }`)
             }
             console.log(`The latest release was ${tagFrom}`)
+
               let level
               temp_notes.includes("### 🚀 Features") ? level = 'minor' : level = 'patch'
               temp_notes.includes("### 💣 Breaking Changes") ? level = 'major' : level = level
@@ -84,7 +85,6 @@ jobs:
                 previous_tag_name: semver.inc(semver.gt(tagFrom, '0.0.0') ? tagFrom : '', level)
                 target_commitish: branch,
               })).data.body
-
             }
             const draft = releases.find((r) => r.draft && r.tag_name === "v"+version)
             const draft_found = !(draft === undefined)
