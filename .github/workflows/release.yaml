@@ -69,6 +69,7 @@ jobs:
             }
             console.log(`The latest release was ${tagFrom}`)
 
+
             let version = tagTo.replace('v', '')
             if (version === 'next'){
               const temp_notes = (await github.rest.repos.generateReleaseNotes({
@@ -82,7 +83,7 @@ jobs:
               let level
               temp_notes.includes("### 🚀 Features") ? level = 'minor' : level = 'patch'
               temp_notes.includes("### 💣 Breaking Changes") ? level = 'major' : level = level
-              version = semver.inc(tagFrom, minor)
+              version = semver.inc(tagFrom, 'minor')
               console.log(`The level of the release is ${level}`)
             }
             const draft = releases.find((r) => r.draft && r.tag_name === "v"+version)
