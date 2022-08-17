@@ -6,7 +6,7 @@ import (
 
 	"k8s.io/apimachinery/pkg/types"
 	"sigs.k8s.io/controller-runtime/pkg/client"
-	"sigs.k8s.io/gateway-api/apis/v1alpha2"
+	"sigs.k8s.io/gateway-api/apis/v1beta1"
 )
 
 //go:generate go run github.com/maxbrunsfeld/counterfeiter/v6 . ChangeProcessor
@@ -42,9 +42,14 @@ type ChangeProcessorConfig struct {
 }
 
 type ChangeProcessorImpl struct {
-	store   *store
-	changed bool
-	cfg     ChangeProcessorConfig
+	store *store
+	// storeChanged tells if the store is changed.
+	// The store is considered changed if:
+	// (1) Any of its resources was deleted.
+	// (2) A new resource was upserted.
+	// (3) An existing resource with the updated Generation was upserted.
+	storeChanged bool
+	cfg          ChangeProcessorConfig
 
 	lock sync.Mutex
 }
@@ -67,52 +72,54 @@ func (c *ChangeProcessorImpl) CaptureUpsertChange(obj client.Object) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	c.changed = true
+	resourceChanged := true
 
 	switch o := obj.(type) {
-	case *v1alpha2.GatewayClass:
+	case *v1beta1.GatewayClass:
 		if o.Name != c.cfg.GatewayClassName {
 			panic(fmt.Errorf("gatewayclass resource must be %s, got %s", c.cfg.GatewayClassName, o.Name))
 		}
 		// if the resource spec hasn't changed (its generation is the same), ignore the upsert
 		if c.store.gc != nil && c.store.gc.Generation == o.Generation {
-			c.changed = false
+			resourceChanged = false
 		}
 		c.store.gc = o
-	case *v1alpha2.Gateway:
+	case *v1beta1.Gateway:
 		// if the resource spec hasn't changed (its generation is the same), ignore the upsert
 		prev, exist := c.store.gateways[getNamespacedName(obj)]
 		if exist && o.Generation == prev.Generation {
-			c.changed = false
+			resourceChanged = false
 		}
 		c.store.gateways[getNamespacedName(obj)] = o
-	case *v1alpha2.HTTPRoute:
+	case *v1beta1.HTTPRoute:
 		// if the resource spec hasn't changed (its generation is the same), ignore the upsert
 		prev, exist := c.store.httpRoutes[getNamespacedName(obj)]
 		if exist && o.Generation == prev.Generation {
-			c.changed = false
+			resourceChanged = false
 		}
 		c.store.httpRoutes[getNamespacedName(obj)] = o
 	default:
 		panic(fmt.Errorf("ChangeProcessor doesn't support %T", obj))
 	}
+
+	c.storeChanged = c.storeChanged || resourceChanged
 }
 
 func (c *ChangeProcessorImpl) CaptureDeleteChange(resourceType client.Object, nsname types.NamespacedName) {
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	c.changed = true
+	c.storeChanged = true
 
 	switch resourceType.(type) {
-	case *v1alpha2.GatewayClass:
+	case *v1beta1.GatewayClass:
 		if nsname.Name != c.cfg.GatewayClassName {
 			panic(fmt.Errorf("gatewayclass resource must be %s, got %s", c.cfg.GatewayClassName, nsname.Name))
 		}
 		c.store.gc = nil
-	case *v1alpha2.Gateway:
+	case *v1beta1.Gateway:
 		delete(c.store.gateways, nsname)
-	case *v1alpha2.HTTPRoute:
+	case *v1beta1.HTTPRoute:
 		delete(c.store.httpRoutes, nsname)
 	default:
 		panic(fmt.Errorf("ChangeProcessor doesn't support %T", resourceType))
@@ -123,11 +130,11 @@ func (c *ChangeProcessorImpl) Process() (changed bool, conf Configuration, statu
 	c.lock.Lock()
 	defer c.lock.Unlock()
 
-	if !c.changed {
+	if !c.storeChanged {
 		return false, conf, statuses
 	}
 
-	c.changed = false
+	c.storeChanged = false
 
 	graph := buildGraph(
 		c.store,
