@@ -185,7 +185,7 @@ jobs:
         uses: docker/metadata-action@v4
         with:
           images: |
-            name=ghcr.io/nginxinc/nginx-kubernetes-gateway
+            name=ghcr.io/pammecrandall/nginx-kubernetes-gateway
           tags: |
             type=semver,pattern={{version}}
             type=edge
@@ -212,7 +212,7 @@ jobs:
         uses: aquasecurity/trivy-action@0.6.2
         continue-on-error: true
         with:
-          image-ref: ghcr.io/nginxinc/nginx-kubernetes-gateway:${{ steps.meta.outputs.version }}
+          image-ref: ghcr.io/pammecrandall/nginx-kubernetes-gateway:${{ steps.meta.outputs.version }}
           format: 'sarif'
           output: 'trivy-results-nginx-kubernetes-gateway.sarif'
           ignore-unfixed: 'true'
