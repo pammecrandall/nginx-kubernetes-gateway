@@ -228,3 +228,4 @@ jobs:
           name: 'trivy-results-nginx-kubernetes-gateway.sarif'
           path: 'trivy-results-nginx-kubernetes-gateway.sarif'
         if: always()
+
